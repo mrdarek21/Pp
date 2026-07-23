@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>A Letter Has Arrived</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Parisienne&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --wine-deep:#210711;
+    --wine:#3d0f1f;
+    --wine-light:#6e2036;
+    --paper:#f8f0dd;
+    --paper-shadow:#e8dcc0;
+    --gold:#c9a24a;
+    --gold-bright:#eccf88;
+    --ink:#3a1220;
+    --rose:#b3536b;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0;padding:0;
+    height:100%;
+    background:radial-gradient(ellipse at 50% 20%, var(--wine) 0%, var(--wine-deep) 70%);
+    overflow-x:hidden;
+    font-family:'Cormorant Garamond', serif;
+  }
+  #petal-layer{
+    position:fixed;inset:0;pointer-events:none;z-index:30;overflow:hidden;
+  }
+  .petal{
+    position:absolute;top:-5%;
+    width:10px;height:14px;
+    background:linear-gradient(135deg, var(--rose), #7a2c3e);
+    border-radius:70% 20% 70% 20%;
+    opacity:.75;
+    filter:drop-shadow(0 0 3px rgba(0,0,0,.3));
+  }
+  .bokeh{
+    position:fixed;border-radius:50%;
+    filter:blur(40px);
+    opacity:.25;
+    pointer-events:none;
+    z-index:1;
+  }
+  .bokeh:nth-child(1){width:260px;height:260px;background:var(--gold);top:8%;left:12%;animation:drift1 18s ease-in-out infinite;}
+  .bokeh:nth-child(2){width:200px;height:200px;background:var(--rose);bottom:10%;right:15%;animation:drift2 22s ease-in-out infinite;}
+  .bokeh:nth-child(3){width:150px;height:150px;background:var(--gold-bright);top:55%;left:70%;animation:drift1 15s ease-in-out infinite reverse;}
+  @keyframes drift1{0%,100%{transform:translate(0,0);}50%{transform:translate(30px,-40px);}}
+  @keyframes drift2{0%,100%{transform:translate(0,0);}50%{transform:translate(-40px,30px);}}
+
+  .scene{
+    position:relative;z-index:10;
+    min-height:100vh;
+    display:flex;align-items:center;justify-content:center;
+    padding:6vh 5vw;
+  }
+
+  /* ---------- ENVELOPE SCENE ---------- */
+  #envelope-scene{ flex-direction:column; text-align:center; }
+  .eyebrow{
+    font-family:'Playfair Display', serif;
+    letter-spacing:.35em;
+    text-transform:uppercase;
+    font-size:.72rem;
+    color:var(--gold-bright);
+    margin-bottom:2.2rem;
+    opacity:.85;
+  }
+  .envelope-wrap{
+    perspective:1600px;
+    width:min(340px, 78vw);
+  }
+  .envelope{
+    position:relative;
+    width:100%;
+    aspect-ratio: 3 / 2;
+    filter:drop-shadow(0 18px 40px rgba(0,0,0,.55));
+  }
+  .env-body{
+    position:absolute;inset:0;
+    background:linear-gradient(160deg, #efe3c8, #ddccA4);
+    border-radius:4px;
+  }
+  .env-pocket-shadow{
+    position:absolute;left:0;right:0;bottom:0;height:62%;
+    background:linear-gradient(0deg, rgba(0,0,0,.14), transparent);
+    border-radius:0 0 4px 4px;
+  }
+  .env-flap{
+    position:absolute;top:0;left:0;right:0;height:58%;
+    background:linear-gradient(155deg, #e6d7b4, #cdb885);
+    clip-path: polygon(0 0, 100% 0, 50% 100%);
+    transform-origin:top center;
+    transition: transform 1.1s cubic-bezier(.6,.1,.2,1);
+    z-index:3;
+  }
+  .env-flap.open{ transform: rotateX(178deg); }
+
+  .seal{
+    position:absolute;
+    top:50%;left:50%;
+    width:64px;height:64px;
+    transform:translate(-50%,-46%);
+    border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #a83248, #6e1626 70%);
+    box-shadow:0 6px 14px rgba(0,0,0,.5), inset 0 0 10px rgba(0,0,0,.4);
+    border:none;
+    cursor:pointer;
+    z-index:5;
+    display:flex;align-items:center;justify-content:center;
+    color:var(--gold-bright);
+    font-family:'Playfair Display', serif;
+    font-size:1.4rem;
+    transition: transform .35s ease;
+  }
+  .seal:hover{ transform:translate(-50%,-46%) scale(1.06); }
+  .seal .crack{
+    position:absolute;inset:0;
+    opacity:0;
+  }
+  .seal.breaking{
+    animation: sealBreak .5s ease forwards;
+  }
+  @keyframes sealBreak{
+    0%{transform:translate(-50%,-46%) scale(1);}
+    40%{transform:translate(-50%,-46%) scale(1.15) rotate(-6deg);}
+    100%{transform:translate(-50%,-46%) scale(0) rotate(25deg); opacity:0;}
+  }
+
+  .prompt-text{
+    margin-top:2.6rem;
+    font-size:1.15rem;
+    color:var(--paper);
+    font-style:italic;
+    letter-spacing:.02em;
+    opacity:.9;
+  }
+  .prompt-text .tap{
+    display:block;
+    font-size:.75rem;
+    letter-spacing:.25em;
+    text-transform:uppercase;
+    color:var(--gold);
+    margin-top:.6rem;
+    font-style:normal;
+    animation: pulseGlow 2.2s ease-in-out infinite;
+  }
+  @keyframes pulseGlow{
+    0%,100%{opacity:.55;}
+    50%{opacity:1;}
+  }
+
+  #envelope-scene.hidden, #letter-scene.hidden{ display:none; }
+
+  /* ---------- LETTER SCENE ---------- */
+  #letter-scene{
+    opacity:0;
+    transform:translateY(30px) scale(.97);
+  }
+  #letter-scene.enter{
+    animation: letterIn 1s cubic-bezier(.2,.7,.3,1) forwards;
+  }
+  @keyframes letterIn{
+    to{ opacity:1; transform:translateY(0) scale(1); }
+  }
+
+  .paper{
+    position:relative;
+    width:min(640px, 92vw);
+    background:
+      radial-gradient(ellipse at top left, rgba(255,255,255,.5), transparent 60%),
+      var(--paper);
+    color:var(--ink);
+    padding:clamp(2.2rem, 5vw, 4rem);
+    border-radius:2px;
+    box-shadow:0 30px 70px rgba(0,0,0,.5), 0 0 0 1px rgba(120,80,40,.15);
+  }
+  .paper::before, .paper::after{
+    content:"❦";
+    position:absolute;
+    font-size:1.4rem;
+    color:var(--gold);
+    opacity:.7;
+  }
+  .paper::before{ top:14px; left:18px; }
+  .paper::after{ bottom:14px; right:18px; transform:rotate(180deg); }
+
+  .salutation{
+    font-family:'Playfair Display', serif;
+    font-weight:700;
+    font-size:clamp(1.5rem, 4vw, 2.2rem);
+    margin:0 0 1.4rem 0;
+    color:var(--wine);
+  }
+  .letter-body p{
+    font-size:clamp(1.05rem, 2.4vw, 1.25rem);
+    line-height:1.75;
+    font-style:italic;
+    color:#4a2130;
+    margin:0 0 1.1rem 0;
+    opacity:0;
+    transform:translateY(10px);
+  }
+  .letter-body p.reveal{
+    animation: lineIn .7s ease forwards;
+  }
+  @keyframes lineIn{ to{opacity:1; transform:translateY(0);} }
+
+  .letter-body p::first-letter{
+    font-family:'Playfair Display', serif;
+    font-size:2.3em;
+    font-weight:900;
+    color:var(--wine-light);
+    float:left;
+    line-height:0.8;
+    margin:.05em .1em 0 0;
+  }
+  .letter-body p.no-dropcap::first-letter{ all:unset; }
+
+  .question{
+    font-family:'Parisienne', cursive;
+    font-size:clamp(2.2rem, 6vw, 3.4rem);
+    color:var(--wine);
+    text-align:center;
+    margin:2.2rem 0 2rem 0;
+    opacity:0;
+  }
+  .question.reveal{ animation: lineIn 1s ease forwards; }
+
+  .divider{
+    width:120px;height:1px;
+    background:linear-gradient(90deg, transparent, var(--gold), transparent);
+    margin:1.6rem auto;
+    opacity:0;
+  }
+  .divider.reveal{ animation: lineIn .8s ease forwards; }
+
+  .btn-row{
+    display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;
+    margin-top:1.6rem;
+    opacity:0;
+    min-height:60px;
+  }
+  .btn-row.reveal{ animation: lineIn .8s ease forwards; }
+
+  button.choice{
+    font-family:'Playfair Display', serif;
+    font-weight:700;
+    font-size:.95rem;
+    letter-spacing:.03em;
+    padding:.85rem 1.8rem;
+    border-radius:2px;
+    cursor:pointer;
+    transition: all .25s ease;
+    position:relative;
+  }
+  #yesBtn{
+    background:linear-gradient(135deg, var(--gold-bright), var(--gold));
+    color:var(--wine-deep);
+    border:1px solid var(--gold);
+    box-shadow:0 6px 18px rgba(201,162,74,.35);
+  }
+  #yesBtn:hover{ transform:translateY(-2px); box-shadow:0 10px 24px rgba(201,162,74,.5); }
+  #noBtn{
+    background:transparent;
+    color:var(--wine-light);
+    border:1px solid var(--wine-light);
+  }
+  #noBtn:hover{ background:rgba(110,32,54,.08); }
+
+  .footnote{
+    text-align:center;
+    font-size:.85rem;
+    color:var(--wine-light);
+    opacity:0;
+    margin-top:1.4rem;
+    font-style:italic;
+  }
+  .footnote.show{ animation: lineIn .6s ease forwards; }
+
+  .confirmed{
+    text-align:center;
+    font-family:'Playfair Display', serif;
+    font-size:1.3rem;
+    color:var(--wine);
+    margin-top:1.6rem;
+    display:none;
+  }
+  .confirmed.show{ display:block; animation: lineIn .8s ease forwards; }
+  .confirmed .stamp{
+    display:inline-block;
+    border:2px solid var(--rose);
+    color:var(--rose);
+    padding:.3rem .9rem;
+    border-radius:3px;
+    transform:rotate(-4deg);
+    font-family:'Playfair Display', serif;
+    letter-spacing:.15em;
+    text-transform:uppercase;
+    font-size:.85rem;
+    margin-bottom:.8rem;
+  }
+
+  @media (max-width:480px){
+    .paper::before, .paper::after{ font-size:1.1rem; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation:none !important; transition:none !important; }
+    .letter-body p, .question, .divider, .btn-row{ opacity:1 !important; transform:none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bokeh"></div>
+<div class="bokeh"></div>
+<div class="bokeh"></div>
+<div id="petal-layer"></div>
+
+<!-- SCENE 1: ENVELOPE -->
+<div class="scene" id="envelope-scene">
+  <div class="eyebrow">a letter has arrived</div>
+  <div class="envelope-wrap">
+    <div class="envelope">
+      <div class="env-body"></div>
+      <div class="env-pocket-shadow"></div>
+      <div class="env-flap" id="flap"></div>
+      <button class="seal" id="seal" aria-label="Break the seal to open the letter">❦</button>
+    </div>
+  </div>
+  <p class="prompt-text">Sealed with something I've been meaning to say.
+    <span class="tap">break the seal to open</span>
+  </p>
+</div>
+
+<!-- SCENE 2: LETTER -->
+<div class="scene hidden" id="letter-scene">
+  <div class="paper">
+    <div class="salutation">My Dearest,</div>
+    <div class="letter-body">
+      <p id="p1">I've known you for a while now — long enough to stop being surprised by how steady you are, and long enough to know that steadiness isn't nothing.</p>
+      <p id="p2">There's one thing I keep coming back to: you saw me at my worst, the stretch I wasn't proud of, and you stayed anyway. Most people find a reason to leave. You didn't.</p>
+      <p id="p3" class="no-dropcap">So this isn't really a leap for me. It's just me finally saying out loud what I've been meaning to for a while.</p>
+    </div>
+
+    <div class="question" id="question">Will you go on a date with me?</div>
+    <div class="divider" id="divider"></div>
+
+    <div class="btn-row" id="btnRow">
+      <button class="choice" id="yesBtn">Yes, I'd love to</button>
+      <button class="choice" id="noBtn">Perhaps another time</button>
+    </div>
+
+    <div class="footnote" id="footnote"></div>
+
+    <div class="confirmed" id="confirmed">
+      <div class="stamp">approved</div><br>
+      Then it's settled — I'll be counting the days. 🤍
+    </div>
+  </div>
+</div>
+
+<script>
+  // Falling petals ambient system
+  const petalLayer = document.getElementById('petal-layer');
+  const PETAL_COUNT = 22;
+  for(let i=0;i<PETAL_COUNT;i++){
+    const p = document.createElement('div');
+    p.className = 'petal';
+    const startLeft = Math.random()*100;
+    const duration = 9 + Math.random()*10;
+    const delay = Math.random()*14;
+    const drift = (Math.random()-0.5)*160;
+    const rotate = Math.random()*360;
+    const scale = 0.6 + Math.random()*0.9;
+    p.style.left = startLeft + 'vw';
+    p.style.setProperty('--drift', drift + 'px');
+    p.style.transform = `scale(${scale}) rotate(${rotate}deg)`;
+    p.style.animation = `fall ${duration}s linear ${delay}s infinite`;
+    petalLayer.appendChild(p);
+  }
+  const styleSheet = document.createElement('style');
+  styleSheet.textContent = `
+    @keyframes fall{
+      0%{ transform: translateY(-10vh) translateX(0) rotate(0deg); opacity:0; }
+      8%{ opacity:.8; }
+      92%{ opacity:.6; }
+      100%{ transform: translateY(110vh) translateX(var(--drift)) rotate(340deg); opacity:0; }
+    }
+  `;
+  document.head.appendChild(styleSheet);
+
+  // Envelope opening sequence
+  const seal = document.getElementById('seal');
+  const flap = document.getElementById('flap');
+  const envelopeScene = document.getElementById('envelope-scene');
+  const letterScene = document.getElementById('letter-scene');
+
+  seal.addEventListener('click', () => {
+    seal.classList.add('breaking');
+    seal.disabled = true;
+    setTimeout(() => {
+      flap.classList.add('open');
+    }, 350);
+    setTimeout(() => {
+      envelopeScene.classList.add('hidden');
+      letterScene.classList.remove('hidden');
+      letterScene.classList.add('enter');
+      revealLetter();
+    }, 1350);
+  });
+
+  function revealLetter(){
+    const sequence = [
+      { el: document.getElementById('p1'), delay: 200 },
+      { el: document.getElementById('p2'), delay: 900 },
+      { el: document.getElementById('p3'), delay: 1700 },
+      { el: document.getElementById('question'), delay: 2600 },
+      { el: document.getElementById('divider'), delay: 3200 },
+      { el: document.getElementById('btnRow'), delay: 3500 },
+    ];
+    sequence.forEach(({el, delay}) => {
+      setTimeout(() => el.classList.add('reveal'), delay);
+    });
+  }
+
+  // Yes / No interaction
+  const yesBtn = document.getElementById('yesBtn');
+  const noBtn = document.getElementById('noBtn');
+  const footnote = document.getElementById('footnote');
+  const confirmed = document.getElementById('confirmed');
+  const btnRow = document.getElementById('btnRow');
+
+  const gentleReplies = [
+    "the ink seems to disagree with you",
+    "the wax seal begs to differ",
+    "I wrote this letter rather hoping for the other answer",
+    "one more try, for old time's sake?"
+  ];
+  let declineCount = 0;
+
+  noBtn.addEventListener('click', () => {
+    footnote.textContent = gentleReplies[Math.min(declineCount, gentleReplies.length-1)];
+    footnote.classList.remove('show');
+    void footnote.offsetWidth; // restart animation
+    footnote.classList.add('show');
+    declineCount++;
+    noBtn.style.transform = `scale(${Math.max(0.82, 1 - declineCount*0.05)})`;
+  });
+
+  yesBtn.addEventListener('click', () => {
+    btnRow.style.display = 'none';
+    footnote.classList.remove('show');
+    confirmed.classList.add('show');
+  });
+</script>
+
+</body>
+</html>
